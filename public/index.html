@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Branch Tracker Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            color: #2c3e50;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .nav-links {
+            margin-top: 16px;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin-right: 12px;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .nav-links a:last-child {
+            margin-right: 0;
+        }
+
+        .filters {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 12px;
+        }
+
+        .filter-group input, .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            background: white;
+            min-width: 140px;
+        }
+
+        .filter-group input:focus, .filter-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+            border-color: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            border-color: #4b5563;
+            transform: translateY(-1px);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-item:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12px;
+        }
+
+        .users-table th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .users-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .user-row {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-row:hover {
+            background: #f1f5f9;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-merged {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-deployed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 16px 0;
+            border: 1px solid #fecaca;
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 4% auto;
+            padding: 24px;
+            border-radius: 4px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .close {
+            font-size: 20px;
+            cursor: pointer;
+            color: #64748b;
+            transition: color 0.2s ease;
+            background: none;
+            border: none;
+            padding: 4px;
+        }
+
+        .close:hover {
+            color: #374151;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 12px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 400;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .progress-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a202c;
+            margin: 0;
+        }
+
+        .progress-status {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease-in-out;
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-around;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .progress-logs {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 10px;
+            background: #f8fafc;
+            font-size: 11px;
+            color: #374151;
+        }
+
+        .progress-logs .log-item {
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .log-item.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .log-item.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .log-item.info {
+            background-color: #e0f2fe;
+            color: #1e40af;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-links a {
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-code-branch"></i>
+                Git Branch Tracker Dashboard
+            </h1>
+            <p>Track user productivity and branch lifecycle metrics with detailed analytics</p>
+            <div class="nav-links">
+                <a href="index.html" style="background: #10b981;">
+                    <i class="fas fa-code-branch"></i>
+                    Branch Dashboard
+                </a>
+                <a href="tasks.html" style="background: #3b82f6;">
+                    <i class="fas fa-tasks"></i>
+                    Task Analytics
+                </a>
+                <a href="chatbot.html" style="background: #f59e0b;">
+                    <i class="fas fa-robot"></i>
+                    AI Chatbot
+                </a>
+                <a href="specific-users.html" style="background: #8b5cf6;">
+                    <i class="fas fa-users"></i>
+                    Specific Users
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="merged">Merged</option>
+                        <option value="deployed">Deployed</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-filter"></i>
+                        Apply Filters
+                    </button>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-secondary" onclick="showSyncModal()" id="syncBtn">
+                        <i class="fas fa-sync"></i>
+                        Sync Data
+                    </button>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-secondary" onclick="loadSyncStatus()" style="background: #3b82f6; color: white;">
+                        <i class="fas fa-info-circle"></i>
+                        Sync Status
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading data...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error" id="error" style="display: none;"></div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Summary Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <div class="card-icon" style="background: #3b82f6;">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        Summary Statistics
+                    </h2>
+                </div>
+                <div class="stats-grid" id="summaryStats">
+                    <!-- Stats will be populated here -->
+                </div>
+            </div>
+
+            <!-- Top Users -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <div class="card-icon" style="background: #10b981;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        Top Users
+                    </h2>
+                </div>
+                <div id="topUsers">
+                    <!-- Top users will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <div class="card-icon" style="background: #8b5cf6;">
+                        <i class="fas fa-table"></i>
+                    </div>
+                    User Statistics
+                </h2>
+            </div>
+            <div id="usersTable">
+                <!-- Users table will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Modal -->
+    <div class="modal" id="syncModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Sync Repository Data</h2>
+                <button class="close" onclick="closeSyncModal()">&times;</button>
+            </div>
+            <form id="syncForm">
+                <div class="form-group">
+                    <label for="owner">Repository Owner</label>
+                    <input type="text" id="owner" placeholder="e.g., microsoft" required>
+                </div>
+                <div class="form-group">
+                    <label for="repo">Repository Name</label>
+                    <input type="text" id="repo" placeholder="e.g., vscode" required>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Start Date (Optional)</label>
+                    <input type="date" id="syncStartDate" placeholder="Start date for sync">
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End Date (Optional)</label>
+                    <input type="date" id="syncEndDate" placeholder="End date for sync">
+                </div>
+                <div class="form-group">
+                    <label for="batchSize">Batch Size</label>
+                    <select id="batchSize">
+                        <option value="25">25 branches</option>
+                        <option value="50" selected>50 branches</option>
+                        <option value="100">100 branches</option>
+                        <option value="200">200 branches</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="maxConcurrency">Max Concurrency</label>
+                    <select id="maxConcurrency">
+                        <option value="5">5 concurrent</option>
+                        <option value="10" selected>10 concurrent</option>
+                        <option value="15">15 concurrent</option>
+                        <option value="20">20 concurrent</option>
+                    </select>
+                </div>
+                
+                <!-- Sync Progress -->
+                <div id="syncProgress" style="display: none;">
+                    <div class="progress-header">
+                        <h3>Sync Progress</h3>
+                        <div class="progress-status" id="progressStatus">Initializing...</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-details">
+                        <div class="progress-item">
+                            <span>Branches Processed:</span>
+                            <span id="branchesProcessed">0</span>
+                        </div>
+                        <div class="progress-item">
+                            <span>Successful:</span>
+                            <span id="branchesSuccessful">0</span>
+                        </div>
+                        <div class="progress-item">
+                            <span>Failed:</span>
+                            <span id="branchesFailed">0</span>
+                        </div>
+                        <div class="progress-item">
+                            <span>Time Elapsed:</span>
+                            <span id="timeElapsed">0s</span>
+                        </div>
+                    </div>
+                    <div class="progress-logs" id="progressLogs">
+                        <!-- Live logs will appear here -->
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeSyncModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="syncSubmitBtn">Start Sync</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentData = {};
+        const API_BASE = 'http://localhost:3001/api';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+            setDefaultDates();
+        });
+
+        // Set default date range (last 30 days)
+        function setDefaultDates() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        }
+
+        // Show/hide loading
+        function showLoading(show = true) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                showLoading(true);
+                
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const status = document.getElementById('statusFilter').value;
+                
+                const response = await fetch(`${API_BASE}/dashboard/summary?startDate=${startDate}&endDate=${endDate}&status=${status}`);
+                const data = await response.json();
+                
+                currentData = data;
+                
+                renderSummaryStats(data.summary);
+                renderTopUsers(data.topUsers);
+                renderUsersTable(data.topUsers);
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showError('Failed to load dashboard data');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            loadDashboard();
+        }
+
+        // Render summary statistics
+        function renderSummaryStats(summary) {
+            const statsContainer = document.getElementById('summaryStats');
+            
+            const stats = [
+                { label: 'Total Branches', value: summary.totalBranches || 0, icon: 'fas fa-code-branch' },
+                { label: 'Active Branches', value: summary.activeBranches || 0, icon: 'fas fa-play-circle' },
+                { label: 'Merged Branches', value: summary.mergedBranches || 0, icon: 'fas fa-check-circle' },
+                { label: 'Total Commits', value: summary.totalCommits || 0, icon: 'fas fa-code' },
+                { label: 'Avg Wait Time', value: `${Math.round(summary.avgWaitingTime || 0)}h`, icon: 'fas fa-clock' },
+                { label: 'Total Users', value: summary.topUsers?.length || 0, icon: 'fas fa-users' }
+            ];
+            
+            statsContainer.innerHTML = stats.map(stat => `
+                <div class="stat-item">
+                    <div class="stat-value">${stat.value}</div>
+                    <div class="stat-label">
+                        <i class="${stat.icon}"></i> ${stat.label}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render top users
+        function renderTopUsers(topUsers) {
+            const container = document.getElementById('topUsers');
+            
+            if (!topUsers || topUsers.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">No user data available</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="display: grid; gap: 8px;">
+                    ${topUsers.slice(0, 5).map((user, index) => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <div>
+                                <div style="font-weight: 600; color: #1a202c; font-size: 12px;">${user.userName}</div>
+                                <div style="font-size: 11px; color: #64748b;">
+                                    ${user.branchCount} branches • ${user.totalCommits} commits
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #10b981; font-size: 12px;">${Math.round(user.avgWaitingTime)}h</div>
+                                <div style="font-size: 11px; color: #64748b;">avg wait</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render users table
+        function renderUsersTable(topUsers) {
+            const container = document.getElementById('usersTable');
+            
+            if (!topUsers || topUsers.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">No user data available</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Branches</th>
+                            <th>Commits</th>
+                            <th>Avg Wait Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${topUsers.map(user => `
+                            <tr class="user-row" onclick="loadUserDetails('${user._id}')">
+                                <td>
+                                    <div style="font-weight: 600; color: #1a202c;">${user.userName}</div>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 600; color: #3b82f6;">${user.branchCount}</span>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 600; color: #10b981;">${user.totalCommits}</span>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 600; color: #f59e0b;">${Math.round(user.avgWaitingTime)}h</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-active">Active</span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Load user details
+        async function loadUserDetails(userId) {
+            try {
+                showLoading(true);
+                
+                const response = await fetch(`${API_BASE}/users/${userId}/branches`);
+                const data = await response.json();
+                
+                // You can implement a modal or redirect to show user details
+                console.log('User details:', data);
+                
+            } catch (error) {
+                console.error('Error loading user details:', error);
+                showError('Failed to load user details');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Sync modal functions
+        function showSyncModal() {
+            document.getElementById('syncModal').style.display = 'block';
+        }
+
+        function closeSyncModal() {
+            document.getElementById('syncModal').style.display = 'none';
+        }
+
+        // Handle sync form submission
+        document.getElementById('syncForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const owner = document.getElementById('owner').value;
+            const repo = document.getElementById('repo').value;
+            const startDate = document.getElementById('syncStartDate').value;
+            const endDate = document.getElementById('syncEndDate').value;
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const maxConcurrency = parseInt(document.getElementById('maxConcurrency').value);
+            
+            // Show progress section
+            document.getElementById('syncProgress').style.display = 'block';
+            document.getElementById('syncSubmitBtn').disabled = true;
+            document.getElementById('syncSubmitBtn').textContent = 'Syncing...';
+            
+            // Initialize progress
+            let startTime = Date.now();
+            let progressInterval;
+            
+            const updateProgress = () => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('timeElapsed').textContent = `${elapsed}s`;
+            };
+            
+            progressInterval = setInterval(updateProgress, 1000);
+            
+            const addLog = (message, type = 'info') => {
+                const logsContainer = document.getElementById('progressLogs');
+                const logItem = document.createElement('div');
+                logItem.className = `log-item ${type}`;
+                logItem.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logsContainer.appendChild(logItem);
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            };
+            
+            try {
+                addLog('Starting repository sync...', 'info');
+                document.getElementById('progressStatus').textContent = 'Connecting to repository...';
+                
+                const syncData = {
+                    owner,
+                    repo,
+                    batchSize,
+                    maxConcurrency
+                };
+                
+                // Add date range if provided
+                if (startDate) syncData.startDate = startDate;
+                if (endDate) syncData.endDate = endDate;
+                
+                const response = await fetch(`${API_BASE}/sync`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(syncData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                addLog('Repository access confirmed', 'success');
+                document.getElementById('progressStatus').textContent = 'Processing branches...';
+                
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep incomplete line in buffer
+                    
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            try {
+                                const data = JSON.parse(line);
+                                
+                                if (data.type === 'progress') {
+                                    // Update progress metrics
+                                    document.getElementById('branchesProcessed').textContent = data.processed || 0;
+                                    document.getElementById('branchesSuccessful').textContent = data.successful || 0;
+                                    document.getElementById('branchesFailed').textContent = data.failed || 0;
+                                    
+                                    // Update progress bar
+                                    if (data.total && data.processed) {
+                                        const percentage = Math.min((data.processed / data.total) * 100, 100);
+                                        document.getElementById('progressFill').style.width = `${percentage}%`;
+                                    }
+                                    
+                                    // Update status
+                                    if (data.status) {
+                                        document.getElementById('progressStatus').textContent = data.status;
+                                    }
+                                    
+                                    // Add log message
+                                    if (data.message) {
+                                        addLog(data.message, data.messageType || 'info');
+                                    }
+                                } else if (data.type === 'complete') {
+                                    // Sync completed
+                                    clearInterval(progressInterval);
+                                    document.getElementById('progressStatus').textContent = 'Sync completed';
+                                    document.getElementById('progressFill').style.width = '100%';
+                                    
+                                    addLog(`Sync completed successfully!`, 'success');
+                                    addLog(`Total branches: ${data.totalBranches}`, 'info');
+                                    addLog(`Successful: ${data.successful}`, 'success');
+                                    addLog(`Failed: ${data.failed}`, 'error');
+                                    
+                                    // Re-enable submit button
+                                    document.getElementById('syncSubmitBtn').disabled = false;
+                                    document.getElementById('syncSubmitBtn').textContent = 'Sync Completed';
+                                    
+                                    // Reload dashboard after a short delay
+                                    setTimeout(() => {
+                                        loadDashboard();
+                                        closeSyncModal();
+                                        showError('Sync completed successfully!');
+                                    }, 2000);
+                                    
+                                    return;
+                                }
+                            } catch (parseError) {
+                                // Handle non-JSON lines (regular log messages)
+                                if (line.trim()) {
+                                    addLog(line.trim(), 'info');
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Sync error:', error);
+                
+                addLog(`Sync failed: ${error.message}`, 'error');
+                document.getElementById('progressStatus').textContent = 'Sync failed';
+                
+                // Re-enable submit button
+                document.getElementById('syncSubmitBtn').disabled = false;
+                document.getElementById('syncSubmitBtn').textContent = 'Retry Sync';
+                
+                showError(`Sync failed: ${error.message}`);
+            }
+        });
+
+        // Load sync status
+        async function loadSyncStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/sync/status`);
+                const data = await response.json();
+                
+                showError(`Sync Status: ${data.status} | Total Branches: ${data.totalBranches} | Total Users: ${data.totalUsers}`);
+                
+            } catch (error) {
+                console.error('Error loading sync status:', error);
+                showError('Failed to load sync status');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('syncModal');
+            if (event.target === modal) {
+                closeSyncModal();
+            }
+        }
+    </script>
+</body>
+</html> 

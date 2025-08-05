@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Git Tracker Chatbot - Task Analytics</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #f5f7fa;
+        min-height: 100vh;
+        color: #2c3e50;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1.5;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .header {
+        background: #ffffff;
+        border: 1px solid #e1e5e9;
+        border-radius: 4px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .header h1 {
+        color: #1a202c;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header p {
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 400;
+      }
+
+      .nav-links {
+        margin-top: 16px;
+      }
+
+      .nav-links a {
+        display: inline-block;
+        margin-right: 12px;
+        padding: 8px 16px;
+        background: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+      }
+
+      .nav-links a:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+      }
+
+      .nav-links a:last-child {
+        margin-right: 0;
+      }
+
+      .chatbot-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .chat-interface {
+        background: #ffffff;
+        border: 1px solid #e1e5e9;
+        border-radius: 4px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+      }
+
+      .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .chat-header h2 {
+        color: #1a202c;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .chat-icon {
+        width: 32px;
+        height: 32px;
+        background: #3b82f6;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        max-height: 400px;
+      }
+
+      .message {
+        margin-bottom: 12px;
+        padding: 12px;
+        border-radius: 4px;
+        max-width: 80%;
+        word-wrap: break-word;
+        font-size: 12px;
+      }
+
+      .message.user {
+        background: #3b82f6;
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 2px;
+      }
+
+      .message.bot {
+        background: white;
+        color: #374151;
+        border: 1px solid #e2e8f0;
+        border-bottom-left-radius: 2px;
+      }
+
+      .message.error {
+        background: #dc2626;
+        color: white;
+      }
+
+      .message.typing {
+        background: #f1f5f9;
+        color: #64748b;
+        font-style: italic;
+      }
+
+      .chat-input {
+        display: flex;
+        gap: 8px;
+      }
+
+      .chat-input input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 400;
+        transition: all 0.2s ease;
+      }
+
+      .chat-input input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .chat-input button {
+        padding: 8px 16px;
+        background: #3b82f6;
+        color: white;
+        border: 1px solid #3b82f6;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 36px;
+      }
+
+      .chat-input button:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+        transform: translateY(-1px);
+      }
+
+      .quick-actions {
+        background: #ffffff;
+        border: 1px solid #e1e5e9;
+        border-radius: 4px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .quick-actions h3 {
+        color: #1a202c;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .quick-actions h3 i {
+        color: #3b82f6;
+      }
+
+      .action-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+      }
+
+      .action-btn {
+        padding: 12px 16px;
+        background: #3b82f6;
+        color: white;
+        border: 1px solid #3b82f6;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        min-height: 48px;
+      }
+
+      .action-btn:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+      }
+
+      .action-btn i {
+        margin-right: 8px;
+      }
+
+      .task-details {
+        background: #ffffff;
+        border: 1px solid #e1e5e9;
+        border-radius: 4px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-top: 24px;
+      }
+
+      .task-details h3 {
+        color: #1a202c;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      .task-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+      }
+
+      .info-card {
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 4px;
+        border-left: 3px solid #3b82f6;
+      }
+
+      .info-card h4 {
+        color: #1a202c;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .info-card p {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 400;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .spinner {
+        border: 2px solid #e2e8f0;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 12px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 4px;
+        margin: 12px 0;
+        display: none;
+        font-size: 12px;
+        border: 1px solid #fecaca;
+      }
+
+      @media (max-width: 768px) {
+        .chatbot-container {
+          grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>
+          <i class="fas fa-robot"></i>
+          Git Tracker Chatbot
+        </h1>
+        <p>
+          Ask questions about tasks and get detailed analytics using natural
+          language
+        </p>
+        <div class="nav-links">
+          <a href="index.html">
+            <i class="fas fa-code-branch"></i>
+            Branch Dashboard
+          </a>
+          <a href="tasks.html">
+            <i class="fas fa-tasks"></i>
+            Task Analytics
+          </a>
+          <a href="chatbot.html" style="background: #f59e0b">
+            <i class="fas fa-robot"></i>
+            AI Chatbot
+          </a>
+          <a href="specific-users.html">
+            <i class="fas fa-users"></i>
+            Specific Users
+          </a>
+        </div>
+      </div>
+
+      <!-- Chatbot Interface -->
+      <div class="chatbot-container">
+        <!-- Chat Interface -->
+        <div class="chat-interface">
+          <div class="chat-header">
+            <div class="chat-icon">
+              <i class="fas fa-comments"></i>
+            </div>
+            <h2>Task Analytics Chat</h2>
+          </div>
+
+          <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+              👋 Hello! I'm your Git Tracker assistant. Ask me about any task to
+              get detailed analytics and insights. Try asking:
+              <br /><br />
+              • "Bring me the details for task ID GS-10262"
+              <br />
+              • "What are the analytics for task SQ2-1196?"
+              <br />
+              • "Show me the timeline for task TASK-123"
+            </div>
+          </div>
+
+          <div class="chat-input">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Ask about a task..."
+              onkeypress="handleKeyPress(event)"
+            />
+            <button onclick="sendMessage()">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <h3>
+            <i class="fas fa-bolt"></i>
+            Quick Actions
+          </h3>
+          <div class="action-buttons">
+            <button class="action-btn" onclick="quickQuery('GS-10262')">
+              <i class="fas fa-user-shield"></i>
+              GS-10262: User Authentication
+            </button>
+            <button class="action-btn" onclick="quickQuery('SQ2-1196')">
+              <i class="fas fa-tachometer-alt"></i>
+              SQ2-1196: API Performance
+            </button>
+            <button class="action-btn" onclick="quickQuery('TASK-123')">
+              <i class="fas fa-database"></i>
+              TASK-123: Database Migration
+            </button>
+            <button class="action-btn" onclick="showHelp()">
+              <i class="fas fa-question-circle"></i>
+              Show Help & Examples
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Details Display -->
+      <div class="task-details" id="taskDetails" style="display: none">
+        <h3>
+          <i class="fas fa-info-circle"></i>
+          Task Details
+        </h3>
+        <div class="task-info" id="taskInfo">
+          <!-- Task information will be displayed here -->
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing your request...</p>
+      </div>
+
+      <!-- Error -->
+      <div class="error" id="error"></div>
+    </div>
+
+    <script>
+      const CHATBOT_API_URL = "http://localhost:3002/api/chat";
+      const TASK_API_URL = "http://localhost:3002/api/task";
+      const ANALYTICS_API_URL = "http://localhost:3002/api/task";
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+
+      function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        // Add user message to chat
+        addMessage(message, "user");
+        input.value = "";
+
+        // Show loading
+        showLoading(true);
+
+        // Send to chatbot API
+        fetch(CHATBOT_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: message,
+            sessionId: "web-interface",
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            showLoading(false);
+
+            if (
+              data.type === "task_report" ||
+              data.type === "combined_summary"
+            ) {
+              addMessage(data.formattedReport || data.message, "bot");
+              displayTaskDetails(data.data);
+            } else if (data.type === "not_found") {
+              addMessage(`❌ ${data.message}`, "error");
+            } else {
+              addMessage(data.message, "bot");
+            }
+          })
+          .catch((error) => {
+            showLoading(false);
+            addMessage(
+              "❌ Sorry, I encountered an error. Please try again.",
+              "error"
+            );
+            console.error("Error:", error);
+          });
+      }
+
+      function quickQuery(taskId) {
+        const message = `Bring me the details for task ID ${taskId}`;
+        document.getElementById("messageInput").value = message;
+        sendMessage();
+      }
+
+      function showHelp() {
+        const helpMessage = `📚 **Help & Examples**
+
+**Available Commands:**
+• "Bring me the details for task ID [TASK_ID]"
+• "What are the analytics for task [TASK_ID]?"
+• "Show me the timeline for task [TASK_ID]"
+• "Get metrics for task [TASK_ID]"
+
+**Demo Tasks Available:**
+• GS-10262: User Authentication Enhancement
+• SQ2-1196: API Performance Optimization  
+• TASK-123: Database Schema Migration
+
+**Features:**
+✅ Task details and timeline
+✅ Performance analytics
+✅ Quality metrics
+✅ Progress trends
+✅ Natural language queries`;
+
+        addMessage(helpMessage, "bot");
+      }
+
+      function addMessage(message, type) {
+        const chatMessages = document.getElementById("chatMessages");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${type}`;
+        messageDiv.innerHTML = message.replace(/\n/g, "<br>");
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function displayTaskDetails(data) {
+        const taskDetails = document.getElementById("taskDetails");
+        const taskInfo = document.getElementById("taskInfo");
+
+        if (data.taskDetails) {
+          const task = data.taskDetails;
+          const analytics = data.analytics;
+
+          taskInfo.innerHTML = `
+                    <div class="info-card">
+                        <h4>📋 Task Information</h4>
+                        <p><strong>ID:</strong> ${task.taskId}</p>
+                        <p><strong>Name:</strong> ${task.taskName}</p>
+                        <p><strong>Status:</strong> ${task.status}</p>
+                        <p><strong>Created:</strong> ${new Date(
+                          task.createdAt
+                        ).toLocaleDateString()}</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>📊 Branch Statistics</h4>
+                        <p><strong>Total Branches:</strong> ${
+                          task.totalBranches
+                        }</p>
+                        <p><strong>Active:</strong> ${task.activeBranches}</p>
+                        <p><strong>Merged:</strong> ${task.mergedBranches}</p>
+                        <p><strong>Repositories:</strong> ${task.repositories.join(
+                          ", "
+                        )}</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>👥 Team</h4>
+                        <p><strong>Assignees:</strong> ${task.assignees.join(
+                          ", "
+                        )}</p>
+                        <p><strong>Total Work Time:</strong> ${
+                          task.metrics.totalWorkTime
+                        } hours</p>
+                        <p><strong>Total Commits:</strong> ${
+                          task.metrics.totalCommits
+                        }</p>
+                        <p><strong>Files Changed:</strong> ${
+                          task.metrics.totalFilesChanged
+                        }</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>📈 Analytics</h4>
+                        <p><strong>Development Efficiency:</strong> ${
+                          analytics.developmentEfficiency
+                        } commits/hour</p>
+                        <p><strong>Review Efficiency:</strong> ${
+                          analytics.reviewEfficiency
+                        } comments/hour</p>
+                        <p><strong>Code Quality Score:</strong> ${
+                          analytics.codeQualityScore
+                        }/10</p>
+                        <p><strong>Merge Success Rate:</strong> ${
+                          analytics.mergeSuccessRate
+                        }%</p>
+                    </div>
+                `;
+
+          taskDetails.style.display = "block";
+          taskDetails.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+
+      function showLoading(show) {
+        const loading = document.getElementById("loading");
+        loading.style.display = show ? "block" : "none";
+      }
+
+      function showError(message) {
+        const error = document.getElementById("error");
+        error.textContent = message;
+        error.style.display = "block";
+        setTimeout(() => {
+          error.style.display = "none";
+        }, 5000);
+      }
+
+      // Initialize chatbot
+      document.addEventListener("DOMContentLoaded", function () {
+        // Check if chatbot server is running
+        fetch("http://localhost:3002/api/chat/health")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "healthy") {
+              console.log("Chatbot server is running");
+            }
+          })
+          .catch((error) => {
+            addMessage(
+              "⚠️ Chatbot server is not running. Please start it with: npm run chatbot",
+              "error"
+            );
+          });
+      });
+    </script>
+  </body>
+</html>

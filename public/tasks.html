@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Analytics Dashboard - Git Branch Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            color: #2c3e50;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .nav-links {
+            margin-top: 16px;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin-right: 12px;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-links a:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .nav-links a:last-child {
+            margin-right: 0;
+        }
+
+        .filters {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 12px;
+        }
+
+        .filter-group input, .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            background: white;
+            min-width: 140px;
+        }
+
+        .filter-group input:focus, .filter-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-item:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .tasks-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .tasks-table th,
+        .tasks-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12px;
+        }
+
+        .tasks-table th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .tasks-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .task-row {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .task-row:hover {
+            background: #f1f5f9;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-in_review {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background: #e8f5e8;
+            color: #27ae60;
+        }
+
+        .status-on_hold {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 16px 0;
+            border: 1px solid #fecaca;
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 4% auto;
+            padding: 24px;
+            border-radius: 4px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .close {
+            font-size: 20px;
+            cursor: pointer;
+            color: #64748b;
+            transition: color 0.2s ease;
+            background: none;
+            border: none;
+            padding: 4px;
+        }
+
+        .close:hover {
+            color: #374151;
+        }
+
+        .timeline-container {
+            margin: 20px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin: 12px 0;
+            padding: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .timeline-date {
+            min-width: 100px;
+            font-weight: 600;
+            color: #1a202c;
+            font-size: 12px;
+        }
+
+        .timeline-content {
+            flex: 1;
+            margin-left: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-tasks"></i>
+                Task Analytics Dashboard
+            </h1>
+            <p>Track task progress, work time, and performance metrics across repositories</p>
+            <div class="nav-links">
+                <a href="index.html">
+                    <i class="fas fa-code-branch"></i>
+                    Branch Dashboard
+                </a>
+                <a href="tasks.html" style="background: #10b981;">
+                    <i class="fas fa-tasks"></i>
+                    Task Analytics
+                </a>
+                <a href="chatbot.html">
+                    <i class="fas fa-robot"></i>
+                    AI Chatbot
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Task Status</label>
+                    <select id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="in_review">In Review</option>
+                        <option value="completed">Completed</option>
+                        <option value="on_hold">On Hold</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="assigneeFilter">Assignee</label>
+                    <select id="assigneeFilter">
+                        <option value="">All Assignees</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="loadTaskDashboard()">
+                        <i class="fas fa-filter"></i>
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading task data...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error" id="error" style="display: none;"></div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Summary Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <div class="card-icon" style="background: #3b82f6;">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        Task Summary
+                    </h2>
+                </div>
+                <div class="stats-grid" id="taskSummaryStats">
+                    <!-- Stats will be populated here -->
+                </div>
+            </div>
+
+            <!-- Top Tasks -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <div class="card-icon" style="background: #dc2626;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        Longest Running Tasks
+                    </h2>
+                </div>
+                <div id="topTasks">
+                    <!-- Top tasks will be populated here -->
+                </div>
+            </div>
+
+            <!-- Tasks by Assignee -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <div class="card-icon" style="background: #10b981;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        Tasks by Assignee
+                    </h2>
+                </div>
+                <div id="tasksByAssignee">
+                    <!-- Tasks by assignee will be populated here -->
+                </div>
+            </div>
+
+            <!-- Tasks by Repository -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <div class="card-icon" style="background: #8b5cf6;">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        Tasks by Repository
+                    </h2>
+                </div>
+                <div id="tasksByRepository">
+                    <!-- Tasks by repository will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Table -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <div class="card-icon" style="background: #f59e0b;">
+                        <i class="fas fa-table"></i>
+                    </div>
+                    All Tasks
+                </h2>
+            </div>
+            <div id="tasksTable">
+                <!-- Tasks table will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Details Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Task Details</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalContent">
+                <!-- Modal content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentData = {};
+        const API_BASE = 'http://localhost:3001/api';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTaskDashboard();
+            setDefaultDates();
+            loadAssigneeFilter();
+        });
+
+        // Set default date range (last 30 days)
+        function setDefaultDates() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        }
+
+        // Load assignee filter options
+        async function loadAssigneeFilter() {
+            try {
+                const response = await fetch(`${API_BASE}/users`);
+                const users = await response.json();
+                
+                const select = document.getElementById('assigneeFilter');
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.userId;
+                    option.textContent = user.userName;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading assignees:', error);
+            }
+        }
+
+        // Show/hide loading
+        function showLoading(show = true) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Utility function to format time display
+        function formatTimeDisplay(hours) {
+            if (!hours || hours === 0) return '0h';
+            if (hours >= 24) {
+                const days = Math.floor(hours / 24);
+                const remainingHours = hours % 24;
+                if (remainingHours === 0) {
+                    return `${days}d`;
+                } else {
+                    return `${days}d ${remainingHours.toFixed(1)}h`;
+                }
+            } else {
+                return `${hours.toFixed(1)}h`;
+            }
+        }
+
+        // Load task dashboard data
+        async function loadTaskDashboard() {
+            try {
+                showLoading(true);
+                
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const status = document.getElementById('statusFilter').value;
+                const assignee = document.getElementById('assigneeFilter').value;
+                
+                // Load dashboard analytics
+                const dashboardResponse = await fetch(`${API_BASE}/tasks/analytics/dashboard?startDate=${startDate}&endDate=${endDate}`);
+                const dashboardData = await dashboardResponse.json();
+                
+                // Load tasks list
+                const tasksResponse = await fetch(`${API_BASE}/tasks?startDate=${startDate}&endDate=${endDate}&status=${status}&assignee=${assignee}`);
+                const tasksData = await tasksResponse.json();
+                
+                currentData = { dashboard: dashboardData, tasks: tasksData };
+                
+                renderTaskSummary(dashboardData.summary);
+                renderTopTasks(dashboardData.topTasksByWorkTime);
+                renderTasksByAssignee(dashboardData.tasksByAssignee);
+                renderTasksByRepository(dashboardData.tasksByRepository);
+                renderTasksTable(tasksData.tasks);
+                
+            } catch (error) {
+                console.error('Error loading task dashboard:', error);
+                showError('Failed to load task dashboard data');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Render task summary statistics
+        function renderTaskSummary(summary) {
+            const statsContainer = document.getElementById('taskSummaryStats');
+            
+            const stats = [
+                { label: 'Total Tasks', value: summary.totalTasks || 0, icon: 'fas fa-tasks' },
+                { label: 'Active Tasks', value: summary.activeTasks || 0, icon: 'fas fa-play-circle' },
+                { label: 'In Review', value: summary.inReviewTasks || 0, icon: 'fas fa-eye' },
+                { label: 'Completed', value: summary.completedTasks || 0, icon: 'fas fa-check-circle' },
+                { label: 'Avg Work Time', value: `${formatTimeDisplay(summary.avgWorkTime || 0)}`, icon: 'fas fa-clock' },
+                { label: 'Total Commits', value: summary.totalCommits || 0, icon: 'fas fa-code' }
+            ];
+            
+            statsContainer.innerHTML = stats.map(stat => `
+                <div class="stat-item">
+                    <div class="stat-value">${stat.value}</div>
+                    <div class="stat-label">
+                        <i class="${stat.icon}"></i> ${stat.label}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render top tasks by work time
+        function renderTopTasks(topTasks) {
+            const container = document.getElementById('topTasks');
+            
+            if (!topTasks || topTasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">No task data available</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="display: grid; gap: 8px;">
+                    ${topTasks.slice(0, 5).map((task, index) => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="loadTaskDetails('${task.taskId}')">
+                            <div>
+                                <div style="font-weight: 600; color: #1a202c; font-size: 12px;">${task.taskId}</div>
+                                <div style="font-size: 11px; color: #64748b;">
+                                    ${task.assignees.length} assignees • ${task.repositories.length} repos
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #dc2626; font-size: 12px;">${formatTimeDisplay(task.metrics.totalWorkTime || 0)}</div>
+                                <div style="font-size: 11px; color: #64748b;">${task.status}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render tasks by assignee
+        function renderTasksByAssignee(tasksByAssignee) {
+            const container = document.getElementById('tasksByAssignee');
+            
+            if (!tasksByAssignee || tasksByAssignee.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">No assignee data available</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="display: grid; gap: 8px;">
+                    ${tasksByAssignee.slice(0, 5).map(assignee => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <div>
+                                <div style="font-weight: 600; color: #1a202c; font-size: 12px;">${assignee.userName || assignee._id}</div>
+                                <div style="font-size: 11px; color: #64748b;">
+                                    ${assignee.completedTasks} completed • ${formatTimeDisplay(assignee.avgWorkTime || 0)} avg
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #10b981; font-size: 12px;">${assignee.taskCount}</div>
+                                <div style="font-size: 11px; color: #64748b;">tasks</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render tasks by repository
+        function renderTasksByRepository(tasksByRepository) {
+            const container = document.getElementById('tasksByRepository');
+            
+            if (!tasksByRepository || tasksByRepository.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">No repository data available</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="display: grid; gap: 8px;">
+                    ${tasksByRepository.slice(0, 5).map(repo => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <div>
+                                <div style="font-weight: 600; color: #1a202c; font-size: 12px;">${repo._id}</div>
+                                <div style="font-size: 11px; color: #64748b;">
+                                    ${repo.totalBranches} branches • ${formatTimeDisplay(repo.avgWorkTime || 0)} avg
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #8b5cf6; font-size: 12px;">${repo.taskCount}</div>
+                                <div style="font-size: 11px; color: #64748b;">tasks</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render tasks table
+        function renderTasksTable(tasks) {
+            const container = document.getElementById('tasksTable');
+            
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">No tasks found</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <table class="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>Task Name</th>
+                            <th>Status</th>
+                            <th>Assignees</th>
+                            <th>Repositories</th>
+                            <th>Branches</th>
+                            <th>Work Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tasks.map(task => `
+                            <tr class="task-row" onclick="loadTaskDetails('${task.taskId}')">
+                                <td>
+                                    <div style="font-weight: 600; color: #1a202c;">${task.taskId}</div>
+                                </td>
+                                <td>
+                                    <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${task.taskName}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-${task.status}">${task.status.replace('_', ' ')}</span>
+                                </td>
+                                <td>
+                                    <div style="font-size: 12px;">
+                                        ${task.assignees.length} ${task.assignees.length === 1 ? 'assignee' : 'assignees'}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size: 12px;">
+                                        ${task.repositories.join(', ')}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="text-align: center;">
+                                        <span style="font-weight: 600; color: #3b82f6;">${task.totalBranches}</span>
+                                        <div style="font-size: 11px; color: #64748b;">
+                                            ${task.activeBranches}A / ${task.mergedBranches}M
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 600; color: #f59e0b;">${formatTimeDisplay(task.metrics.totalWorkTime || 0)}</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 11px;" onclick="event.stopPropagation(); loadTaskDetails('${task.taskId}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Load task details
+        async function loadTaskDetails(taskId) {
+            try {
+                showLoading(true);
+                
+                const response = await fetch(`${API_BASE}/tasks/${taskId}`);
+                const data = await response.json();
+                console.log(data);
+                showTaskDetailsModal(data);
+                
+            } catch (error) {
+                console.error('Error loading task details:', error);
+                showError('Failed to load task details');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Show task details modal
+        function showTaskDetailsModal(data) {
+            const modal = document.getElementById('taskModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalTitle.textContent = `Task: ${data.task.taskId}`;
+            
+            modalContent.innerHTML = `
+                <div style="margin-bottom: 24px;">
+                    <h3 style="color: #1a202c; margin-bottom: 12px; font-size: 16px; font-weight: 600;">Task Overview</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 16px; font-weight: 600; color: #3b82f6;">${data.task.taskName}</div>
+                            <div style="font-size: 11px; color: #64748b;">Task Name</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 16px; font-weight: 600; color: #10b981;">${data.task.totalBranches}</div>
+                            <div style="font-size: 11px; color: #64748b;">Total Branches</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 16px; font-weight: 600; color: #f59e0b;">${formatTimeDisplay(data.task.metrics.totalWorkTime || 0)}</div>
+                            <div style="font-size: 11px; color: #64748b;">Total Work Time</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 16px; font-weight: 600; color: #dc2626;">${data.task.assignees.length}</div>
+                            <div style="font-size: 11px; color: #64748b;">Assignees</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <h4 style="color: #1a202c; margin-bottom: 8px; font-size: 14px; font-weight: 600;">Repositories</h4>
+                            <ul style="margin: 0; padding-left: 16px; font-size: 12px;">
+                                ${data.task.repositories.map(repo => `<li style="margin-bottom: 4px;">${repo}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 style="color: #1a202c; margin-bottom: 8px; font-size: 14px; font-weight: 600;">Assignees</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                ${data.assigneeDetails.map(assignee => `
+                                    <span style="padding: 4px 8px; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 11px;">
+                                        ${assignee.userName}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 24px;">
+                    <h3 style="color: #1a202c; margin-bottom: 12px; font-size: 16px; font-weight: 600;">Branch Timeline</h3>
+                    <div class="timeline-container" style="max-height: 300px; overflow-y: auto;">
+                        ${data.metrics.timeline.map(item => `
+                            <div class="timeline-item">
+                                <div class="timeline-date">${new Date(item.created).toLocaleDateString()}</div>
+                                <div class="timeline-content">
+                                    <div style="font-weight: 600; color: #1a202c; font-size: 12px;">${item.branchName}</div>
+                                    <div style="font-size: 11px; color: #64748b;">
+                                        ${item.repository} • ${item.assignee} • 
+                                        <span class="status-badge status-${item.status}">${item.status}</span>
+                                        ${item.workTime ? ` • ${formatTimeDisplay(item.workTime)}` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="color: #1a202c; margin-bottom: 12px; font-size: 16px; font-weight: 600;">Repository Breakdown</h3>
+                    <div style="display: grid; gap: 12px;">
+                        ${Object.entries(data.metrics.byRepository).map(([repo, metrics]) => `
+                            <div style="border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px;">
+                                <div style="font-weight: 600; color: #1a202c; margin-bottom: 8px; font-size: 12px;">${repo}</div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                                    <div style="text-align: center; padding: 6px; background: #f8fafc; border-radius: 4px;">
+                                        <div style="font-weight: 600; color: #3b82f6; font-size: 12px;">${metrics.total}</div>
+                                        <div style="font-size: 11px; color: #64748b;">Branches</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 6px; background: #f8fafc; border-radius: 4px;">
+                                        <div style="font-weight: 600; color: #10b981; font-size: 12px;">${metrics.commits}</div>
+                                        <div style="font-size: 11px; color: #64748b;">Commits</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 6px; background: #f8fafc; border-radius: 4px;">
+                                        <div style="font-weight: 600; color: #f59e0b; font-size: 12px;">${formatTimeDisplay(metrics.workTime)}</div>
+                                        <div style="font-size: 11px; color: #64748b;">Work Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('taskModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('taskModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html> 
