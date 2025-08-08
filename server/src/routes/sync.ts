@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { Branch } from "../models/Branch";
 import { User } from "../models/User";
-import { extractTaskFromBranchName } from "../../src/utils/taskUtils";
+import { extractTaskFromBranchName } from "../utils/taskUtils";
 import { calculateWaitingTime } from "../utils/timeUtils";
 import { Octokit } from "@octokit/rest";
 

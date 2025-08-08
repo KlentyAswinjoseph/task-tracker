@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DashboardResponse, LegacyUser } from '../types/types';
+import { DashboardResponse, LegacyUser, Squad } from '../types/types';
 import { ApiService, FilterParams } from '../services/api';
 import { formatTimeDisplay, setDefaultDates } from '../utils/dateUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -14,6 +14,16 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterParams>(() => setDefaultDates());
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [squads, setSquads] = useState<Squad[]>([]);
+
+  const loadSquads = useCallback(async () => {
+    try {
+      const squadsData = await ApiService.getSquadsForFilter();
+      setSquads(squadsData);
+    } catch (err) {
+      console.error('Error loading squads for filter:', err);
+    }
+  }, []);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -41,8 +51,18 @@ const Dashboard: React.FC = () => {
   }, [loadDashboard]);
 
   useEffect(() => {
+    loadSquads();
+  }, [loadSquads]);
+
+  useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  const squadOptions = squads.map(squad => ({
+    value: squad._id!,
+    label: squad.name,
+    color: squad.color
+  }));
 
   const renderSummaryStats = () => {
     if (!dashboardData?.summary) return null;
@@ -177,6 +197,8 @@ const Dashboard: React.FC = () => {
         onFiltersChange={setFilters}
         onApplyFilters={handleApplyFilters}
         loading={loading}
+        showSquadFilter={true}
+        squadOptions={squadOptions}
       />
 
       {/* Error Message */}

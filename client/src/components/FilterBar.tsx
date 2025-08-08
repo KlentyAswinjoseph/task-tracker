@@ -7,8 +7,10 @@ interface FilterBarProps {
   onApplyFilters: () => void;
   showAssigneeFilter?: boolean;
   showStatusFilter?: boolean;
+  showSquadFilter?: boolean;
   statusOptions?: Array<{ value: string; label: string }>;
   assigneeOptions?: Array<{ value: string; label: string }>;
+  squadOptions?: Array<{ value: string; label: string; color?: string }>;
   loading?: boolean;
 }
 
@@ -33,8 +35,10 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onApplyFilters,
   showAssigneeFilter = false,
   showStatusFilter = true,
+  showSquadFilter = false,
   statusOptions = DEFAULT_STATUS_OPTIONS,
   assigneeOptions = [],
+  squadOptions = [],
   loading = false,
 }) => {
   const handleInputChange = (field: keyof FilterParams, value: string) => {
@@ -84,6 +88,24 @@ const FilterBar: React.FC<FilterBarProps> = ({
               onChange={(e) => handleInputChange('status', e.target.value)}
             >
               {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        
+        {showSquadFilter && (
+          <div className="filter-group">
+            <label htmlFor="squadFilter">Squad</label>
+            <select
+              id="squadFilter"
+              value={filters.squadId || ''}
+              onChange={(e) => handleInputChange('squadId', e.target.value)}
+            >
+              <option value="">All Squads</option>
+              {squadOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

@@ -1,13 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { Branch } from '../models/Branch';
 import { User } from '../models/User';
+import { Squad } from '../models/Squad';
 
 const router = Router();
 
 // GET /api/dashboard/summary - Dashboard summary with filters
 router.get('/summary', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { startDate, endDate, status } = req.query;
+    const { startDate, endDate, status, squadId } = req.query;
 
     // Build date filter
     let dateFilter: any = {};
@@ -23,8 +24,22 @@ router.get('/summary', async (req: Request, res: Response): Promise<void> => {
       statusFilter.status = status;
     }
 
+    // Build squad filter
+    let squadFilter: any = {};
+    if (squadId && squadId !== 'all') {
+      try {
+        const squad = await Squad.findById(squadId);
+        if (squad) {
+          const squadMemberIds = squad.members.map(member => member.userId);
+          squadFilter.userId = { $in: squadMemberIds };
+        }
+      } catch (error) {
+        console.error('Error fetching squad for filtering:', error);
+      }
+    }
+
     // Combine filters
-    const filter = { ...dateFilter, ...statusFilter };
+    const filter = { ...dateFilter, ...statusFilter, ...squadFilter };
 
     // Get branch summary
     const totalBranches = await Branch.countDocuments(filter);

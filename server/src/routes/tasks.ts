@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { Task } from "../models/Task";
 import { Branch } from "../models/Branch";
+import { Squad } from "../models/Squad";
 
 const router = Router();
 
@@ -9,7 +10,7 @@ router.get(
   "/analytics/dashboard",
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { startDate, endDate } = req.query;
+      const { startDate, endDate, squadId } = req.query;
 
       // Build date filter
       let dateFilter: any = {};
@@ -21,9 +22,26 @@ router.get(
           dateFilter["timeline.startTime"].$lte = new Date(endDate as string);
       }
 
+      // Build squad filter
+      let squadFilter: any = {};
+      if (squadId && squadId !== 'all') {
+        try {
+          const squad = await Squad.findById(squadId);
+          if (squad) {
+            const squadMemberIds = squad.members.map(member => member.userId);
+            squadFilter.assignees = { $in: squadMemberIds };
+          }
+        } catch (error) {
+          console.error('Error fetching squad for task filtering:', error);
+        }
+      }
+
+      // Combine filters
+      const filter = { ...dateFilter, ...squadFilter };
+
       // Get task summary
       const taskSummary = await Task.aggregate([
-        { $match: dateFilter },
+        { $match: filter },
         {
           $group: {
             _id: null,
@@ -55,7 +73,7 @@ router.get(
       };
 
       // Get top tasks by work time
-      const topTasksByWorkTime = await Task.find(dateFilter)
+      const topTasksByWorkTime = await Task.find(filter)
         .sort({ "metrics.totalWorkTime": -1 })
         .limit(10)
         .select(
@@ -64,7 +82,7 @@ router.get(
 
       // Get tasks by assignee
       const tasksByAssignee = await Task.aggregate([
-        { $match: dateFilter },
+        { $match: filter },
         { $unwind: "$assignees" },
         {
           $group: {
@@ -83,7 +101,7 @@ router.get(
 
       // Get tasks by repository
       const tasksByRepository = await Task.aggregate([
-        { $match: dateFilter },
+        { $match: filter },
         { $unwind: "$repositories" },
         {
           $group: {

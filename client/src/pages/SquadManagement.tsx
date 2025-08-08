@@ -370,6 +370,7 @@ const SquadManagement: React.FC = () => {
                         }}
                       />
                       <div className="user-info">
+                      <div className="user-name">{user.userId}</div>
                         <div className="user-name">{user.userName}</div>
                         <div className="user-email">{user.email}</div>
                         <div className="user-role">Developer</div>

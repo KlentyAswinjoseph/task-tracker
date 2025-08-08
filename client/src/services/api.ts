@@ -56,6 +56,7 @@ export interface FilterParams {
   endDate?: string;
   status?: string;
   assignee?: string;
+  squadId?: string;
 }
 
 export class ApiService {
@@ -67,6 +68,7 @@ export class ApiService {
     if (filters.startDate) params.append("startDate", filters.startDate);
     if (filters.endDate) params.append("endDate", filters.endDate);
     if (filters.status) params.append("status", filters.status);
+    if (filters.squadId) params.append("squadId", filters.squadId);
 
     const response: AxiosResponse<DashboardResponse> = await api.get(
       `/dashboard/summary?${params.toString()}`
@@ -147,10 +149,17 @@ export class ApiService {
     if (filters.startDate) params.append("startDate", filters.startDate);
     if (filters.endDate) params.append("endDate", filters.endDate);
     if (filters.status) params.append("status", filters.status);
+    if (filters.squadId) params.append("squadId", filters.squadId);
 
     const response: AxiosResponse<TaskDashboardResponse> = await api.get(
-      `/tasks/dashboard?${params.toString()}`
+      `/tasks/analytics/dashboard?${params.toString()}`
     );
+    return response.data;
+  }
+
+  // Get squads for filtering
+  static async getSquadsForFilter(): Promise<Squad[]> {
+    const response: AxiosResponse<Squad[]> = await api.get("/squads/filter/list");
     return response.data;
   }
 

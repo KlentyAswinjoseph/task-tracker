@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ApiService, FilterParams } from '../services/api';
-import { TaskDashboardResponse, Task, User } from '../types/types';
+import { TaskDashboardResponse, Task, User, Squad } from '../types/types';
 import { formatTimeDisplay, setDefaultDates } from '../utils/dateUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -13,6 +13,7 @@ const TaskAnalytics: React.FC = () => {
   const [taskDashboard, setTaskDashboard] = useState<TaskDashboardResponse | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [assigneeOptions, setAssigneeOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [squads, setSquads] = useState<Squad[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterParams>(() => setDefaultDates());
@@ -30,6 +31,15 @@ const TaskAnalytics: React.FC = () => {
     setIsModalOpen(false);
     setSelectedTaskId(null);
   };
+
+  const loadSquads = useCallback(async () => {
+    try {
+      const squadsData = await ApiService.getSquadsForFilter();
+      setSquads(squadsData);
+    } catch (err) {
+      console.error('Error loading squads for filter:', err);
+    }
+  }, []);
 
   const loadTaskDashboard = useCallback(async () => {
     try {
@@ -70,9 +80,16 @@ const TaskAnalytics: React.FC = () => {
   }, [loadTaskDashboard]);
 
   useEffect(() => {
+    loadSquads();
     loadAssigneeFilter();
     loadTaskDashboard();
-  }, [loadAssigneeFilter, loadTaskDashboard]);
+  }, [loadSquads, loadAssigneeFilter, loadTaskDashboard]);
+
+  const squadOptions = squads.map(squad => ({
+    value: squad._id!,
+    label: squad.name,
+    color: squad.color
+  }));
 
   const renderTaskSummary = () => {
     if (!taskDashboard?.summary) return null;
@@ -255,8 +272,10 @@ const TaskAnalytics: React.FC = () => {
         onFiltersChange={setFilters}
         onApplyFilters={handleApplyFilters}
         showAssigneeFilter={true}
+        showSquadFilter={true}
         statusOptions={TASK_STATUS_OPTIONS}
         assigneeOptions={assigneeOptions}
+        squadOptions={squadOptions}
         loading={loading}
       />
 
