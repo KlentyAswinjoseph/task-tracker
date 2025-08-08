@@ -1,291 +1,288 @@
-# Git Tracker
+# Task Tracker - Modern Full-Stack Application
 
-A comprehensive dashboard application that tracks Git branches, user productivity, and branch lifecycle metrics, now with integrated MCP (Model Context Protocol) chatbot for task analytics.
+A modern, full-stack task tracking application built with React + TypeScript frontend and Node.js + Express + TypeScript backend. This project provides comprehensive analytics for Git branch management, user productivity tracking, and task lifecycle metrics.
+
+## 🏗️ Architecture
+
+```
+task-tracker/
+├── client/                # React app (CRA with TypeScript)
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Main page components
+│   │   ├── services/      # API service layer
+│   │   ├── types/         # TypeScript type definitions
+│   │   ├── utils/         # Utility functions
+│   │   └── styles/        # Global CSS styles
+│   └── public/            # Static assets
+├── server/                # Node.js + Express backend
+│   ├── src/
+│   │   ├── models/        # Mongoose data models
+│   │   ├── routes/        # API route handlers
+│   │   ├── services/      # Business logic services
+│   │   ├── middleware/    # Express middleware
+│   │   └── utils/         # Backend utilities
+│   └── dist/              # Compiled TypeScript output
+├── shared/                # Shared TypeScript types
+└── README.md
+```
+
+## ✨ Features
+
+### 📊 Branch Dashboard
+- **Real-time Analytics**: Track total users, branches, commits, and waiting times
+- **User Performance**: Monitor individual developer productivity
+- **Status Tracking**: Active, merged, and deployed branch status
+- **Time Metrics**: Average waiting times and development cycles
+
+### 📋 Task Analytics
+- **Task Lifecycle**: Complete task progression from creation to completion
+- **Work Time Tracking**: Detailed work time analysis per task
+- **Assignee Analytics**: Task distribution and performance by assignee
+- **Repository Insights**: Task distribution across different repositories
+
+### 🎯 Key Capabilities
+- **TypeScript Everywhere**: Strict type safety across frontend and backend
+- **Real-time Data**: Live updates and interactive filtering
+- **Responsive Design**: Mobile-friendly, modern UI
+- **Error Handling**: Comprehensive error handling and loading states
+- **API Integration**: RESTful API with proper error responses
 
 ## 🚀 Quick Start
 
-**Single command to run everything:**
-
-```bash
-npm run run
-```
-
-This starts both the Git Tracker (port 3001) and the AI Chatbot (port 3002).
-
-**Access the interfaces:**
-- Main Dashboard: http://localhost:3001
-- AI Chatbot: http://localhost:3001/chatbot.html
-
-**Test the chatbot:**
-```bash
-curl -X POST http://localhost:3002/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Bring me the details for task ID GS-10262"}'
-```
-
----
-
-## Features
-
-### Core Git Tracker
-- **Branch Tracking**: Monitor branch creation, development, and merging
-- **User Analytics**: Track individual developer productivity and metrics
-- **Repository Sync**: Automated synchronization with GitHub repositories
-- **Performance Metrics**: Development time, review time, and efficiency scores
-- **Task Analytics**: Extract and analyze task IDs from branch names
-
-### MCP Chatbot Integration
-- **Task Details**: Get comprehensive information about any task (e.g., GS-10262)
-- **Task Analytics**: Performance metrics, efficiency scores, and quality indicators
-- **Natural Language Queries**: Ask questions about tasks in plain English
-- **MCP Protocol**: Standard MCP server implementation for AI model integration
-- **Real-time Chat**: WebSocket support for real-time interactions
-
-## Quick Start
+### Prerequisites
+- Node.js 16+ (recommended: 18+)
+- MongoDB (local or cloud instance)
+- Git
 
 ### Installation
 
+1. **Clone and install dependencies:**
 ```bash
-# Install main Git Tracker
-npm install
-
-# Install MCP Chatbot
-cd mcp-chatbot
-npm install
+cd task-tracker
+npm run install:all
 ```
 
-### Running the Services
+2. **Configure environment variables:**
 
-```bash
-# Start both services with one command
-npm run run
-
-# Or run them separately:
-npm start          # Main Git Tracker
-npm run chatbot    # MCP Chatbot
-```
-
-## API Endpoints
-
-### Main Git Tracker
-- `POST /api/sync` - Sync branches from GitHub
-- `GET /api/users` - Get user statistics
-- `GET /api/users/:userId/branches` - Get user's branches
-- `GET /api/branches/:branchId` - Get branch details
-- `GET /api/dashboard/summary` - Dashboard summary
-- `GET /api/tasks` - Get all tasks
-- `GET /api/tasks/:taskId` - Get task details
-
-### MCP Chatbot
-- `GET /api/chat/health` - Health check
-- `POST /api/chat` - Chat interface
-- `GET /api/task/:taskId` - Get task details
-- `GET /api/task/:taskId/analytics` - Get task analytics
-
-## Usage Examples
-
-### Chatbot Queries
-
-```bash
-# Get task details
-curl -X POST http://localhost:3002/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Bring me the details for task ID GS-10262"}'
-
-# Get task analytics
-curl -X POST http://localhost:3002/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What are the analytics for task SQ2-1196?"}'
-
-# Get task timeline
-curl -X POST http://localhost:3002/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Show me the timeline for task TASK-123"}'
-```
-
-### Direct API Calls
-
-```bash
-# Get task details
-curl http://localhost:3002/api/task/GS-10262
-
-# Get task analytics
-curl http://localhost:3002/api/task/GS-10262/analytics
-
-# Health check
-curl http://localhost:3002/api/chat/health
-```
-
-## Project Structure
-
-```
-GitLogs/
-├── index.js                 # Main Git Tracker server
-├── package.json             # Main package configuration
-├── README.md               # This file
-├── public/                 # Static files
-├── mcp-chatbot/           # MCP Chatbot module
-│   ├── demo.js            # Demo server with mock data
-│   ├── start.js           # Production server
-│   ├── src/
-│   │   ├── mcp-server.js  # MCP protocol server
-│   │   ├── task-analyzer.js # Task analysis logic
-│   │   └── database-connector.js # Database connection
-│   ├── config/
-│   │   └── config.js      # Configuration settings
-│   ├── test/
-│   │   └── test-client.js # Test client
-│   └── package.json       # Chatbot package configuration
-└── server.log             # Server logs
-```
-
-## MCP Integration
-
-The MCP chatbot provides the following tools for AI model integration:
-
-1. **get_task_details** - Get comprehensive task information
-2. **get_task_analytics** - Get performance and quality metrics
-3. **get_user_tasks** - Get all tasks for a specific user
-4. **get_repository_tasks** - Get all tasks in a repository
-5. **get_task_timeline** - Get chronological events for a task
-6. **get_task_metrics** - Get detailed metrics breakdown
-
-## Task ID Formats Supported
-
-The system supports various task ID formats:
-
-- `GS-10262` (standard format)
-- `GS10262` (without hyphen)
-- `SQ2-1196` (with project prefix)
-- `TASK-123` (generic format)
-- `SQ-2-123` (with sub-project)
-
-## Configuration
-
-### Main Git Tracker
-Create a `.env` file in the GitLogs directory:
-
+Create `server/.env`:
 ```env
-# GitHub Configuration
-GITHUB_TOKEN=your_github_token_here
-
-# Database Configuration
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
-
 # Server Configuration
 PORT=3001
 NODE_ENV=development
+
+# MongoDB Configuration
+MONGO_URI=mongodb://localhost:27017/task-tracker
+
+# GitHub API Configuration (optional)
+PAT_TOKEN=your_github_personal_access_token_here
+
+# CORS Configuration
+ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-### MCP Chatbot
-Create a `.env` file in the mcp-chatbot directory:
-
-```env
-# Server Configuration
-CHATBOT_PORT=3002
-CHATBOT_HOST=localhost
-NODE_ENV=development
-
-# Database Configuration (same as main)
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
-
-# Logging
-LOG_LEVEL=info
-LOG_CONSOLE=true
-LOG_FILE=false
-
-# CORS
-CORS_ORIGIN=*
+3. **Start the development servers:**
+```bash
+npm run dev
 ```
 
-## Development
+This will start:
+- **Backend API**: http://localhost:3001
+- **Frontend App**: http://localhost:3000
 
-### Running in Development Mode
+## 🛠️ Development
+
+### Available Scripts
 
 ```bash
-# Terminal 1: Main Git Tracker
+# Install all dependencies (root, client, server)
+npm run install:all
+
+# Start both client and server in development mode
 npm run dev
 
-# Terminal 2: MCP Chatbot
-npm run chatbot:dev
+# Start only the backend server
+npm run dev:server
 
-# Terminal 3: MCP Server (for AI integration)
-npm run chatbot:mcp
-```
+# Start only the frontend client
+npm run dev:client
 
-### Testing
+# Build for production
+npm run build
 
-```bash
-# Test the chatbot
-cd mcp-chatbot
+# Start production server (after build)
+npm start
+
+# Run tests
 npm test
 
-# Test the main server
-curl http://localhost:3001/api/chat/health
+# Clean build artifacts
+npm run clean
 ```
 
-## Integration with AI Models
+### Backend API Endpoints
 
-The MCP server can be integrated with AI models that support the Model Context Protocol:
-
-```python
-# Python example with Claude
-from anthropic import Anthropic
-
-client = Anthropic()
-
-response = client.messages.create(
-    model="claude-3-sonnet-20240229",
-    max_tokens=1000,
-    tools=[{
-        "name": "get_task_details",
-        "description": "Get detailed information about a specific task",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "taskId": {"type": "string"}
-            },
-            "required": ["taskId"]
-        }
-    }],
-    messages=[{
-        "role": "user",
-        "content": "Tell me about task GS-10262"
-    }]
-)
+```
+GET    /api/health                      # Health check
+GET    /api/dashboard/summary           # Dashboard analytics
+GET    /api/users                       # User list with filtering
+GET    /api/tasks                       # Task list with filtering
+GET    /api/tasks/analytics/dashboard   # Task dashboard analytics
+GET    /api/tasks/:taskId               # Specific task details
+GET    /api/tasks/:taskId/analytics     # Task-specific analytics
 ```
 
-## Error Handling
+### Frontend Routes
 
-The system includes comprehensive error handling:
+```
+/           # Branch Dashboard
+/tasks      # Task Analytics Dashboard
+/chatbot    # AI Chatbot (coming soon)
+/users      # Specific Users (coming soon)
+```
 
-- **Task Not Found**: Returns appropriate message when task doesn't exist
-- **Database Errors**: Graceful handling of connection issues
-- **Invalid Task IDs**: Normalization and validation of task ID formats
-- **Rate Limiting**: Protection against excessive requests
+## 📱 Technology Stack
 
-## Performance
+### Frontend
+- **React 18** with TypeScript
+- **React Router** for navigation
+- **Axios** for API calls
+- **Chart.js** for data visualization
+- **CSS Modules** for styling
+- **Create React App** for tooling
 
-- **Caching**: Database connection pooling for better performance
-- **Batch Operations**: Efficient handling of multiple queries
-- **Async Processing**: Non-blocking operations for better responsiveness
-- **Connection Management**: Proper connection lifecycle management
+### Backend
+- **Node.js** with **Express**
+- **TypeScript** for type safety
+- **Mongoose** for MongoDB integration
+- **Moment.js** for date handling
+- **CORS** for cross-origin requests
+- **Dotenv** for configuration
 
-## Security
+### Database
+- **MongoDB** for data persistence
+- **Mongoose ODM** for schema validation
 
-- **Input Validation**: All inputs are validated and sanitized
-- **CORS Configuration**: Configurable cross-origin resource sharing
-- **Rate Limiting**: Protection against abuse
-- **Error Sanitization**: Sensitive information is not exposed in errors
+## 🎨 UI/UX Features
 
-## Contributing
+### Design System
+- **Modern Interface**: Clean, professional dashboard design
+- **Responsive Layout**: Works seamlessly on desktop and mobile
+- **Interactive Elements**: Hover effects, loading states, error handling
+- **Typography**: Apple system fonts for optimal readability
+- **Color Scheme**: Professional blue/green color palette
+
+### User Experience
+- **Fast Loading**: Optimized API calls and component rendering
+- **Error Handling**: Graceful error messages with auto-hide
+- **Loading States**: Smooth loading indicators
+- **Filtering**: Real-time data filtering by date, status, assignee
+- **Navigation**: Intuitive navigation with active state indicators
+
+## 🔧 Configuration
+
+### Environment Variables
+
+#### Backend (`server/.env`)
+```env
+PORT=3001                               # Server port
+NODE_ENV=development                    # Environment mode
+MONGO_URI=mongodb://localhost:27017/task-tracker  # MongoDB connection
+PAT_TOKEN=ghp_xxxxxxxxxxxxxx           # GitHub API token (optional)
+ALLOWED_ORIGINS=http://localhost:3000   # CORS origins
+```
+
+#### Frontend (`client/.env`)
+```env
+REACT_APP_API_URL=http://localhost:3001/api  # Backend API URL
+```
+
+## 🚢 Production Deployment
+
+### Build for Production
+```bash
+npm run build
+```
+
+### Environment Setup
+1. Set `NODE_ENV=production` in server environment
+2. Configure MongoDB production connection
+3. Set proper CORS origins for your domain
+4. Configure reverse proxy (nginx recommended)
+
+### Docker Support (Optional)
+```dockerfile
+# Example Dockerfile structure
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3001
+CMD ["npm", "start"]
+```
+
+## 🧪 Testing
+
+### Frontend Testing
+```bash
+cd client
+npm test                    # Run React tests
+npm run test:coverage       # Run with coverage
+```
+
+### Backend Testing
+```bash
+cd server
+npm test                    # Run server tests
+```
+
+## 📈 Performance Optimizations
+
+- **Code Splitting**: Automatic route-based code splitting
+- **API Optimization**: Efficient database queries with aggregation
+- **Caching**: Browser caching for static assets
+- **Compression**: Gzip compression for API responses
+- **TypeScript**: Compile-time optimizations
+
+## 🔒 Security Features
+
+- **Input Validation**: Server-side validation for all API inputs
+- **Error Handling**: Sanitized error messages
+- **CORS Protection**: Configured cross-origin resource sharing
+- **Environment Variables**: Sensitive data in environment variables
+- **TypeScript**: Type safety preventing common vulnerabilities
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes with proper TypeScript types
+4. Test your changes
+5. Commit with clear messages: `git commit -m "Add feature description"`
+6. Push and create a Pull Request
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details. 
+MIT License - see LICENSE file for details.
+
+## 🆘 Troubleshooting
+
+### Common Issues
+
+1. **Port already in use**: Change PORT in environment variables
+2. **MongoDB connection failed**: Ensure MongoDB is running
+3. **API calls failing**: Check CORS configuration
+4. **Build errors**: Ensure all TypeScript types are properly defined
+
+### Getting Help
+
+- Check the browser console for frontend errors
+- Check server logs for backend errors  
+- Ensure all environment variables are set correctly
+- Verify MongoDB connection and data structure
+
+---
+
+**Built with ❤️ using modern web technologies and best practices** 

@@ -1,0 +1,41 @@
+{
+  "name": "task-tracker-server",
+  "version": "1.0.0",
+  "description": "Task Tracker Backend API with TypeScript",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "PAT_TOKEN=pattoken nodemon --exec ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "clean": "rimraf dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "task-tracker",
+    "typescript",
+    "express",
+    "mongodb",
+    "api"
+  ],
+  "author": "Task Tracker Team",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^19.0.13",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.18.2",
+    "moment": "^2.30.1",
+    "mongoose": "^8.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^16.18.0",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.0",
+    "rimraf": "^5.0.10",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
