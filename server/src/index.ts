@@ -8,6 +8,7 @@ import dashboardRouter from "./routes/dashboard";
 import usersRouter from "./routes/users";
 import tasksRouter from "./routes/tasks";
 import syncRouter from "./routes/sync";
+import squadsRouter from "./routes/squads";
 // import build from "../../client"
 
 // Import middleware
@@ -35,6 +36,7 @@ app.use("/api/dashboard", dashboardRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/api/sync", syncRouter);
+app.use("/api/squads", squadsRouter);
 
 // Health check endpoint
 app.get("/api/health", (req: Request, res: Response) => {
@@ -87,6 +89,7 @@ const startServer = async (): Promise<void> => {
       );
       console.log(`👥 Users API: http://localhost:${PORT}/api/users`);
       console.log(`📋 Tasks API: http://localhost:${PORT}/api/tasks`);
+      console.log(`👥 Squads API: http://localhost:${PORT}/api/squads`);
       console.log("\n📱 Frontend should connect to: http://localhost:3000");
     });
   } catch (error) {

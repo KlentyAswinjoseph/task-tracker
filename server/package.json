@@ -4,7 +4,7 @@
   "description": "Task Tracker Backend API with TypeScript",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "PAT_TOKEN=pattoken nodemon --exec ts-node src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "clean": "rimraf dist",

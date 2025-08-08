@@ -181,4 +181,45 @@ export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+// Squad Management Types
+export interface SquadMember {
+  userId: string;
+  userName: string;
+  email?: string;
+  role?: string;
+  joinedAt: Date;
+}
+
+export interface Squad {
+  _id?: string;
+  name: string;
+  description: string;
+  color: string;
+  members: SquadMember[];
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SquadCreateRequest {
+  name: string;
+  description?: string;
+  color?: string;
+  createdBy: string;
+}
+
+export interface SquadUpdateRequest {
+  name?: string;
+  description?: string;
+  color?: string;
+}
+
+export interface SquadMemberRequest {
+  memberIds: string[];
+}
+
+export interface SquadMemberRoleRequest {
+  role: string;
 } 
