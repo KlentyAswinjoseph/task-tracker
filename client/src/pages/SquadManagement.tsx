@@ -12,6 +12,7 @@ const SquadManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -19,6 +20,12 @@ const SquadManagement: React.FC = () => {
     color: '#3b82f6'
   });
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [syncData, setSyncData] = useState({
+    organization: '',
+    isSyncing: false,
+    progress: null as any,
+    results: null as any
+  });
 
   // Load squads and users from API
   const loadData = async () => {
@@ -113,6 +120,31 @@ const SquadManagement: React.FC = () => {
     }
   };
 
+  const handleSyncUsers = async () => {
+    if (!syncData.organization.trim()) return;
+
+    try {
+      setSyncData(prev => ({ ...prev, isSyncing: true, progress: null, results: null }));
+      setError(null);
+
+      await ApiService.syncUsers(
+        syncData.organization,
+        (progress) => {
+          setSyncData(prev => ({ ...prev, progress }));
+        },
+        (results) => {
+          setSyncData(prev => ({ ...prev, results, isSyncing: false }));
+          // Reload users after sync
+          loadData();
+        }
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sync users');
+      console.error('Error syncing users:', err);
+      setSyncData(prev => ({ ...prev, isSyncing: false }));
+    }
+  };
+
   const getAvailableUsers = (squad: Squad) => {
     return users.filter(user => !squad.members.some(member => member.userId === user.userId));
   };
@@ -140,14 +172,24 @@ const SquadManagement: React.FC = () => {
           </h1>
           <p>Create and manage teams, assign members to squads</p>
         </div>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowCreateModal(true)}
-          disabled={loading}
-        >
-          <i className="fas fa-plus"></i>
-          Create Squad
-        </button>
+        <div className="header-actions">
+          <button 
+            className="btn btn-secondary"
+            onClick={() => setShowSyncModal(true)}
+            disabled={loading}
+          >
+            <i className="fas fa-sync"></i>
+            Sync Users
+          </button>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setShowCreateModal(true)}
+            disabled={loading}
+          >
+            <i className="fas fa-plus"></i>
+            Create Squad
+          </button>
+        </div>
       </div>
 
       <div className="squads-grid">
@@ -351,6 +393,83 @@ const SquadManagement: React.FC = () => {
                 disabled={selectedUsers.length === 0 || loading}
               >
                 {loading ? 'Assigning...' : `Assign ${selectedUsers.length} Member${selectedUsers.length !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sync Users Modal */}
+      {showSyncModal && (
+        <div className="modal-overlay" onClick={() => setShowSyncModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Sync Users from Git Organization</h3>
+              <button 
+                className="btn-close"
+                onClick={() => setShowSyncModal(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="organization-name">Organization Name</label>
+                <input
+                  id="organization-name"
+                  type="text"
+                  value={syncData.organization}
+                  onChange={(e) => setSyncData(prev => ({ ...prev, organization: e.target.value }))}
+                  placeholder="Enter GitHub organization name"
+                  disabled={syncData.isSyncing}
+                />
+              </div>
+              
+              {syncData.progress && (
+                <div className="sync-progress">
+                  <div className="progress-status">
+                    <strong>{syncData.progress.status}</strong>
+                  </div>
+                  <div className="progress-message">
+                    {syncData.progress.message}
+                  </div>
+                  {syncData.progress.results && (
+                    <div className="progress-results">
+                      <div className="result-item">
+                        <span>Total Users:</span>
+                        <span>{syncData.progress.results.totalUsers}</span>
+                      </div>
+                      <div className="result-item">
+                        <span>Created:</span>
+                        <span>{syncData.progress.results.usersCreated}</span>
+                      </div>
+                      <div className="result-item">
+                        <span>Updated:</span>
+                        <span>{syncData.progress.results.usersUpdated}</span>
+                      </div>
+                      <div className="result-item">
+                        <span>Skipped:</span>
+                        <span>{syncData.progress.results.usersSkipped}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowSyncModal(false)}
+                disabled={syncData.isSyncing}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleSyncUsers}
+                disabled={!syncData.organization.trim() || syncData.isSyncing}
+              >
+                {syncData.isSyncing ? 'Syncing...' : 'Sync Users'}
               </button>
             </div>
           </div>

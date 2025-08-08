@@ -244,4 +244,50 @@ export class ApiService {
     const response: AxiosResponse<User[]> = await api.get("/squads/users/all");
     return response.data;
   }
+
+  // User Sync API
+  static async syncUsers(
+    organization: string,
+    onProgress: (data: any) => void,
+    onComplete: (data: any) => void
+  ): Promise<void> {
+    const response = await fetch("api/sync/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organization }),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`User sync failed with status ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const data = JSON.parse(line);
+            if (data.type === "progress") {
+              onProgress(data);
+            } else if (data.type === "complete") {
+              onComplete(data);
+              return;
+            }
+          } catch (e) {
+            console.warn("Failed to parse user sync data:", line);
+          }
+        }
+      }
+    }
+  }
 }

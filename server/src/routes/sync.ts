@@ -577,4 +577,174 @@ router.get("/status", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// POST /api/sync/users - Sync users from Git organization
+router.post("/users", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { organization } = req.body;
+
+    if (!organization) {
+      res.status(400).json({
+        error: "Organization name is required",
+        success: false,
+      });
+      return;
+    }
+
+    console.log(`Starting user sync for organization: ${organization}`);
+
+    // Set up streaming response for real-time progress
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Transfer-Encoding", "chunked");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const sendProgress = (data: any) => res.write(JSON.stringify(data) + "\n");
+
+    sendProgress({
+      type: "progress",
+      status: "Starting user sync...",
+      message: `Fetching users from organization: ${organization}`,
+      messageType: "info"
+    });
+
+    // Fetch organization members
+    let allMembers: any[] = [];
+    let page = 1;
+    const perPage = 100;
+
+    while (true) {
+      try {
+        const response = await octokit.orgs.listMembers({
+          org: organization,
+          per_page: perPage,
+          page: page,
+        });
+
+        if (response.data.length === 0) break;
+
+        allMembers.push(...response.data);
+        
+        sendProgress({
+          type: "progress",
+          status: `Fetched ${allMembers.length} users...`,
+          message: `Retrieved page ${page} of organization members`,
+          messageType: "info"
+        });
+
+        page++;
+        
+        // Rate limiting - small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error: any) {
+        if (error.status === 404) {
+          sendProgress({
+            type: "progress",
+            status: "Organization not found",
+            message: `Organization '${organization}' not found or not accessible`,
+            messageType: "error"
+          });
+          res.end();
+          return;
+        }
+        throw error;
+      }
+    }
+
+    sendProgress({
+      type: "progress",
+      status: "Processing users...",
+      message: `Processing ${allMembers.length} users from organization`,
+      messageType: "info"
+    });
+
+    // Process and save users
+    let usersCreated = 0;
+    let usersUpdated = 0;
+    let usersSkipped = 0;
+
+    for (const member of allMembers) {
+      try {
+        // Get detailed user info
+        const userResponse = await octokit.users.getByUsername({
+          username: member.login,
+        });
+
+        const userData = userResponse.data;
+        
+        // Check if user already exists
+        const existingUser = await User.findOne({ userId: userData.login });
+        
+        if (existingUser) {
+          // Update existing user
+          existingUser.userName = userData.name || userData.login;
+          existingUser.email = userData.email || undefined;
+          existingUser.avatar = userData.avatar_url;
+          existingUser.lastActivity = new Date();
+          await existingUser.save();
+          usersUpdated++;
+        } else {
+          // Create new user
+          const newUser = new User({
+            userId: userData.login,
+            userName: userData.name || userData.login,
+            email: userData.email || undefined,
+            avatar: userData.avatar_url,
+            stats: {
+              totalBranches: 0,
+              activeBranches: 0,
+              mergedBranches: 0,
+              avgWaitingTime: 0,
+              totalCommits: 0,
+              totalAdditions: 0,
+              totalDeletions: 0,
+            },
+            lastActivity: new Date(),
+          });
+          await newUser.save();
+          usersCreated++;
+        }
+
+        sendProgress({
+          type: "progress",
+          status: `Processed ${usersCreated + usersUpdated + usersSkipped}/${allMembers.length} users...`,
+          message: `Processing user: ${userData.login}`,
+          messageType: "info"
+        });
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (error: any) {
+        console.error(`Error processing user ${member.login}:`, error.message);
+        usersSkipped++;
+      }
+    }
+
+    sendProgress({
+      type: "complete",
+      status: "User sync completed successfully",
+      message: `Sync completed: ${usersCreated} created, ${usersUpdated} updated, ${usersSkipped} skipped`,
+      messageType: "success",
+      results: {
+        totalUsers: allMembers.length,
+        usersCreated,
+        usersUpdated,
+        usersSkipped,
+      }
+    });
+
+    res.end();
+  } catch (error: any) {
+    console.error("User sync error:", error);
+    res.write(
+      JSON.stringify({
+        type: "progress",
+        status: "Critical error",
+        message: `User sync error: ${error.message}`,
+        messageType: "error",
+      }) + "\n"
+    );
+    res.end();
+  }
+});
+
 export default router;
