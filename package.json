@@ -7,9 +7,13 @@
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm start",
+    "dev:client": "cd client && PORT=8080 npm start",
     "build": "cd client && npm run build && cd ../server && npm run build",
     "start": "cd server && npm start",
+    "start:prod": "concurrently \"npm run start:server\" \"npm run start:client\"",
+    "start:server": "cd server && PORT=8080 npm start",
+    "start:client": "serve -s client/build -l 8080",
+    "start:port": "npm run build && npm start",
     "test": "cd client && npm test",
     "clean": "cd client && npm run clean && cd ../server && npm run clean"
   },
@@ -30,6 +34,7 @@
     "concurrently": "^9.2.0"
   },
   "dependencies": {
-    "@octokit/rest": "^22.0.0"
+    "@octokit/rest": "^22.0.0",
+    "serve": "^14.2.1"
   }
 }

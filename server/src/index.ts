@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import path from "path";
+import fs from "fs";
 
 // Import routes
 import dashboardRouter from "./routes/dashboard";
@@ -17,13 +19,38 @@ import { errorHandler } from "./middleware/errorHandler";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(express.static("public"));
+
+// Serve client build as static assets
+// Resolve the client build path robustly for both dev (ts-node) and prod (compiled JS)
+const clientBuildCandidates: string[] = [
+  // When process is started from repo root
+  path.resolve(process.cwd(), "client/build"),
+  // When process is started from server folder
+  path.resolve(process.cwd(), "../client/build"),
+  // When using __dirname from compiled path: /server/dist/server/src
+  path.resolve(__dirname, "../../../../client/build"),
+  // When using __dirname from ts-node: /server/src
+  path.resolve(__dirname, "../..", "client", "build"),
+];
+
+const clientBuildPath = clientBuildCandidates.find((candidate) =>
+  fs.existsSync(path.join(candidate, "index.html"))
+);
+
+if (clientBuildPath) {
+  app.use(express.static(clientBuildPath));
+  console.log(`🧱 Serving static assets from: ${clientBuildPath}`);
+} else {
+  console.warn(
+    "⚠️  client/build not found. SPA assets will not be served. Ensure you ran 'npm run build' at repo root."
+  );
+}
 
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -45,17 +72,31 @@ app.get("/api/health", (req: Request, res: Response) => {
     message: "Task Tracker API is running",
     timestamp: new Date().toISOString(),
     version: "1.0.0",
-    port: PORT
+    port: PORT,
   });
 });
 
-// 404 handler
-app.use("*", (req: Request, res: Response) => {
+// 404 handler for API routes only
+app.use("/api/*", (req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     error: "Route not found",
   });
 });
+
+app.get("*", (req: Request, res: Response) => {
+  if (!clientBuildPath) {
+    return res.status(404).send("Frontend build not found. Please build the client.");
+  }
+
+  const indexHtmlPath = path.join(clientBuildPath, "index.html");
+  if (!fs.existsSync(indexHtmlPath)) {
+    return res.status(404).send("index.html not found in client build.");
+  }
+
+  return res.sendFile(indexHtmlPath); // <-- return here too
+});
+
 
 // Error handling middleware
 app.use(errorHandler);
@@ -90,7 +131,11 @@ const startServer = async (): Promise<void> => {
       console.log(`👥 Users API: http://localhost:${PORT}/api/users`);
       console.log(`📋 Tasks API: http://localhost:${PORT}/api/tasks`);
       console.log(`👥 Squads API: http://localhost:${PORT}/api/squads`);
-      console.log("\n📱 Frontend should connect to: http://localhost:3000");
+      console.log(
+        `
+📱 Frontend served from: http://localhost:${PORT}
+        `
+      );
     });
   } catch (error) {
     console.error("❌ Failed to start server:", error);

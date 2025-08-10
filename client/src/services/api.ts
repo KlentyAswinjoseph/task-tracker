@@ -15,7 +15,8 @@ import {
 } from "../types/types";
 
 // New Backend API (port 8080) - Complete Migration
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -83,7 +84,7 @@ export class ApiService {
     onProgress: (data: any) => void,
     onComplete: (data: any) => void
   ): Promise<void> {
-    const response = await fetch("api/sync", {
+    const response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(syncRequest),
@@ -159,7 +160,9 @@ export class ApiService {
 
   // Get squads for filtering
   static async getSquadsForFilter(): Promise<Squad[]> {
-    const response: AxiosResponse<Squad[]> = await api.get("/squads/filter/list");
+    const response: AxiosResponse<Squad[]> = await api.get(
+      "/squads/filter/list"
+    );
     return response.data;
   }
 
@@ -219,33 +222,61 @@ export class ApiService {
     return response.data;
   }
 
-  static async updateSquad(squadId: string, squadData: SquadUpdateRequest): Promise<Squad> {
-    const response: AxiosResponse<Squad> = await api.put(`/squads/${squadId}`, squadData);
+  static async updateSquad(
+    squadId: string,
+    squadData: SquadUpdateRequest
+  ): Promise<Squad> {
+    const response: AxiosResponse<Squad> = await api.put(
+      `/squads/${squadId}`,
+      squadData
+    );
     return response.data;
   }
 
   static async deleteSquad(squadId: string): Promise<{ message: string }> {
-    const response: AxiosResponse<{ message: string }> = await api.delete(`/squads/${squadId}`);
+    const response: AxiosResponse<{ message: string }> = await api.delete(
+      `/squads/${squadId}`
+    );
     return response.data;
   }
 
-  static async addMembersToSquad(squadId: string, memberData: SquadMemberRequest): Promise<Squad> {
-    const response: AxiosResponse<Squad> = await api.post(`/squads/${squadId}/members`, memberData);
+  static async addMembersToSquad(
+    squadId: string,
+    memberData: SquadMemberRequest
+  ): Promise<Squad> {
+    const response: AxiosResponse<Squad> = await api.post(
+      `/squads/${squadId}/members`,
+      memberData
+    );
     return response.data;
   }
 
-  static async removeMemberFromSquad(squadId: string, userId: string): Promise<Squad> {
-    const response: AxiosResponse<Squad> = await api.delete(`/squads/${squadId}/members/${userId}`);
+  static async removeMemberFromSquad(
+    squadId: string,
+    userId: string
+  ): Promise<Squad> {
+    const response: AxiosResponse<Squad> = await api.delete(
+      `/squads/${squadId}/members/${userId}`
+    );
     return response.data;
   }
 
-  static async updateMemberRole(squadId: string, userId: string, roleData: SquadMemberRoleRequest): Promise<Squad> {
-    const response: AxiosResponse<Squad> = await api.put(`/squads/${squadId}/members/${userId}`, roleData);
+  static async updateMemberRole(
+    squadId: string,
+    userId: string,
+    roleData: SquadMemberRoleRequest
+  ): Promise<Squad> {
+    const response: AxiosResponse<Squad> = await api.put(
+      `/squads/${squadId}/members/${userId}`,
+      roleData
+    );
     return response.data;
   }
 
   static async getAvailableUsers(squadId: string): Promise<User[]> {
-    const response: AxiosResponse<User[]> = await api.get(`/squads/${squadId}/available-users`);
+    const response: AxiosResponse<User[]> = await api.get(
+      `/squads/${squadId}/available-users`
+    );
     return response.data;
   }
 
@@ -260,11 +291,14 @@ export class ApiService {
     onProgress: (data: any) => void,
     onComplete: (data: any) => void
   ): Promise<void> {
-    const response = await fetch("api/sync/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ organization }),
-    });
+    const response = await fetch(
+      `${API_BASE_URL.replace(/\/$/, "")}/sync/users`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organization }),
+      }
+    );
 
     if (!response.ok || !response.body) {
       throw new Error(`User sync failed with status ${response.status}`);
