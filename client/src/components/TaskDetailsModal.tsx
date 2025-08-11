@@ -40,10 +40,13 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ taskId, isOpen, onC
   const [taskDetails, setTaskDetails] = useState<TaskDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedBranches, setSelectedBranches] = useState<Record<string, boolean>>({});
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (isOpen && taskId) {
       loadTaskDetails();
+      setSelectedBranches({});
     }
   }, [isOpen, taskId]);
 
@@ -65,6 +68,40 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ taskId, isOpen, onC
       setError('Failed to load task details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleBranchSelection = (repository: string, branchName: string) => {
+    const key = `${repository}__${branchName}`;
+    setSelectedBranches(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSyncSelected = async () => {
+    if (!taskId || !taskDetails) return;
+    const includeBranchKeys = taskDetails.metrics.timeline
+      .filter(item => selectedBranches[`${item.repository}__${item.branchName}`])
+      .map(item => ({ repository: item.repository, branchName: item.branchName }));
+    if (includeBranchKeys.length === 0) {
+      alert('Select at least one branch to sync');
+      return;
+    }
+    try {
+      setIsSyncing(true);
+      await ApiService.syncTask(
+        taskId,
+        { organization: 'klenty', includeBranchKeys },
+        (p) => console.log('Selected branch sync progress', p),
+        async () => {
+          await loadTaskDetails();
+          setSelectedBranches({});
+          alert('Selected branches synced successfully');
+        }
+      );
+    } catch (e: any) {
+      console.error('Selected branch sync failed', e);
+      alert(`Selected branch sync failed: ${e.message || e}`);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -139,7 +176,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ taskId, isOpen, onC
                     border: '1px solid var(--border-color)' 
                   }}>
                     <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--warning-color)' }}>
-                      {formatTimeDisplay(taskDetails.task.metrics.totalWorkTime)}
+                      {formatTimeDisplay(taskDetails.task.metrics?.totalWorkTime)}
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Total Work Time</div>
                   </div>
@@ -218,6 +255,12 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ taskId, isOpen, onC
                         padding: '12px', 
                         borderBottom: '1px solid var(--border-color)' 
                       }}>
+                        <input
+                          type="checkbox"
+                          checked={!!selectedBranches[`${item.repository}__${item.branchName}`]}
+                          onChange={() => toggleBranchSelection(item.repository, item.branchName)}
+                          style={{ marginRight: '8px' }}
+                        />
                         <div style={{ minWidth: '80px', fontSize: '11px', color: 'var(--text-secondary)' }}>
                           {new Date(item.created).toLocaleDateString()}
                         </div>
@@ -312,6 +355,14 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ taskId, isOpen, onC
               )}
             </>
           )}
+        </div>
+        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <button className="btn btn-secondary" onClick={onClose} disabled={isSyncing}>
+            Close
+          </button>
+          <button className="btn btn-primary" onClick={handleSyncSelected} disabled={isSyncing}>
+            {isSyncing ? 'Syncing...' : 'Sync Selected Branches'}
+          </button>
         </div>
       </div>
     </div>

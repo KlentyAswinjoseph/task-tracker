@@ -130,6 +130,62 @@ export class ApiService {
     return response.data;
   }
 
+  // Sync a single task across organization repos or selected branches
+  static async syncTask(
+    taskId: string,
+    options: {
+      organization?: string;
+      owner?: string;
+      limitToRepos?: string[];
+      includeBranchKeys?: Array<{ repository: string; branchName: string }>;
+      batchSize?: number;
+    } = {},
+    onProgress?: (data: any) => void,
+    onComplete?: (data: any) => void
+  ): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL.replace(/\/$/, "")}/tasks/${encodeURIComponent(taskId)}/sync`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(options || {}),
+      }
+    );
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Task sync failed with status ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const data = JSON.parse(line);
+            if (data.type === "progress") {
+              onProgress?.(data);
+            } else if (data.type === "complete") {
+              onComplete?.(data);
+              return;
+            }
+          } catch (e) {
+            console.warn("Failed to parse task sync data:", line);
+          }
+        }
+      }
+    }
+  }
+
   // Users API
   static async getUsers(filters: FilterParams = {}): Promise<User[]> {
     const params = new URLSearchParams();

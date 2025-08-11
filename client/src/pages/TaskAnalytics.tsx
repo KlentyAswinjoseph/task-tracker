@@ -136,7 +136,7 @@ const TaskAnalytics: React.FC = () => {
             <div className="task-info">
               <div className="task-name">{task.taskName}</div>
               <div className="task-stats">
-                {task.totalBranches} branches • {formatTimeDisplay(task.metrics.totalWorkTime)} work time
+                {task.totalBranches} branches • {formatTimeDisplay(task.metrics?.totalWorkTime || 0)} work time
               </div>
             </div>
             <div className="task-badges">
@@ -196,6 +196,24 @@ const TaskAnalytics: React.FC = () => {
   const renderTasksTable = () => {
     if (!tasks?.length) return null;
 
+    const handleSyncTask = async (taskId: string) => {
+      try {
+        await ApiService.syncTask(
+          taskId,
+          { organization: 'klenty' },
+          (p) => console.log('Task sync progress', taskId, p),
+          (c) => {
+            console.log('Task sync complete', taskId, c);
+            loadTaskDashboard();
+            alert(`Sync complete for ${taskId}`);
+          }
+        );
+      } catch (e: any) {
+        console.error('Task sync failed', e);
+        alert(`Task sync failed for ${taskId}: ${e.message || e}`);
+      }
+    };
+
     return (
       <div className="table-container">
         <table className="data-table">
@@ -209,6 +227,7 @@ const TaskAnalytics: React.FC = () => {
               <th>Work Time</th>
               <th>Repositories</th>
               <th>Updated</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -228,10 +247,15 @@ const TaskAnalytics: React.FC = () => {
                   {' / '}
                   {task.totalBranches}
                 </td>
-                <td>{task.assignees.join(', ')}</td>
-                <td>{formatTimeDisplay(task.metrics.totalWorkTime)}</td>
-                <td>{task.repositories.join(', ')}</td>
+                <td>{(task.assignees || []).join(', ')}</td>
+                <td>{formatTimeDisplay(task.metrics?.totalWorkTime || 0)}</td>
+                <td>{(task.repositories || []).join(', ')}</td>
                 <td>{new Date(task.updatedAt).toLocaleDateString()}</td>
+                <td onClick={(e) => e.stopPropagation()}>
+                  <button className="btn btn-secondary" onClick={() => handleSyncTask(task.taskId)}>
+                    <i className="fas fa-sync"></i> Sync
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
